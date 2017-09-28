@@ -1,0 +1,166 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.ka</groupId>
+  <artifactId>thriftoverhttpusingspringbootserver</artifactId>
+  <version>0.0.1</version>
+  <packaging>jar</packaging>
+
+  <name>thriftoverhttpusingspringbootserver</name>
+  <url>http://maven.apache.org</url>
+
+  <parent>
+    <groupId>com.oyo</groupId>
+    <artifactId>oyo-microservice-parent</artifactId>
+    <version>0.0.3</version>
+  </parent>
+
+  <repositories>
+    <repository>
+      <id>s3.release</id>
+      <url>s3://repo.oyo.com/release</url>
+    </repository>
+    <repository>
+      <id>s3.snapshot</id>
+      <url>s3://repo.oyo.com/snapshot</url>
+    </repository>
+  </repositories>
+
+  <properties>
+    <package.name>${project.groupId}.${project.artifactId}</package.name>
+    <thrift.exe>thrift</thrift.exe>
+    <thrift.interface>${basedir}/src/main/resources/api.thrift</thrift.interface>
+    <gendir.target>${basedir}/target/generated-sources</gendir.target>
+  </properties>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
+        <version>1.5.4.RELEASE</version>
+        <configuration>
+          <fork>true</fork>
+          <mainClass>${package.name}.Application</mainClass>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>repackage</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <executions>
+          <execution>
+            <id>add-source</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>target/generated-sources/gen-javabean</source>
+              </sources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <artifactId>maven-antrun-plugin</artifactId>
+        <version>1.8</version>
+        <executions>
+          <execution>
+            <id>generate-sources</id>
+            <phase>generate-sources</phase>
+            <configuration>
+              <target>
+                <echo>create (or clear) output directory for generated
+                  files</echo>
+                <mkdir dir="${gendir.target}" />
+                <delete>
+                  <fileset dir="${gendir.target}" includes="**/*" />
+                </delete>
+                <echo>generate java source files to ${gendir.target}
+                  from ${thrift.interface}</echo>
+                <exec executable="${thrift.exe}">
+                  <arg value="--gen" />
+                  <arg value="java:beans" />
+                  <arg value="-o" />
+                  <arg value="${gendir.target}" />
+                  <arg value="${thrift.interface}" />
+                </exec>
+              </target>
+            </configuration>
+            <goals>
+              <goal>run</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- This plugin is for -->
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.7.9</version>
+        <executions>
+          <execution>
+            <id>pre-unit-test</id>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>post-unit-test</id>
+            <phase>package</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>com.jcabi</groupId>
+        <artifactId>jcabi-maven-plugin</artifactId>
+        <version>0.14.1</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>ajc</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.eclipse.m2e</groupId>
+        <artifactId>lifecycle-mapping</artifactId>
+        <version>1.0.0</version>
+        <configuration>
+          <lifecycleMappingMetadata>
+            <pluginExecutions>
+              <pluginExecution>
+                <pluginExecutionFilter>
+                  <groupId>com.jcabi</groupId>
+                  <artifactId>jcabi-maven-plugin</artifactId>
+                  <versionRange>[0.0,)</versionRange>
+                  <goals>
+                    <goal>ajc</goal>
+                  </goals>
+                </pluginExecutionFilter>
+                <action>
+                  <execute />
+                </action>
+              </pluginExecution>
+            </pluginExecutions>
+          </lifecycleMappingMetadata>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
